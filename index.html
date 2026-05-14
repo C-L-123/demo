@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI自动化学习刷题&错题复盘系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#8B5CF6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-left': 'slideLeft 0.3s ease-out',
+                        'pulse-slow': 'pulse 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        slideLeft: {
+                            '0%': { transform: 'translateX(-20px)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .glass-effect {
+                backdrop-filter: blur(10px);
+                background: rgba(255, 255, 255, 0.9);
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 登录/注册页面 -->
+    <div id="authPage" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-robot text-white text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">AI智能学习系统</h1>
+                <p class="text-gray-500 mt-2">自动化刷题 · 智能错题复盘</p>
+            </div>
+            
+            <!-- 登录表单 -->
+            <div id="loginForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" id="loginUsername" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="请输入用户名">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" id="loginPassword" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="请输入密码">
+                        </div>
+                    </div>
+                    <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition transform hover:scale-[1.02]">
+                        登录
+                    </button>
+                </div>
+                <p class="text-center mt-4 text-gray-600">
+                    还没有账号？<a href="#" onclick="showRegister()" class="text-blue-500 hover:underline">立即注册</a>
+                </p>
+            </div>
+            
+            <!-- 注册表单 -->
+            <div id="registerForm" class="hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" id="regUsername" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="请输入用户名">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" id="regEmail" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="请输入邮箱">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" id="regPassword" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="请输入密码">
+                        </div>
+                    </div>
+                    <button onclick="handleRegister()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition transform hover:scale-[1.02]">
+                        注册
+                    </button>
+                </div>
+                <p class="text-center mt-4 text-gray-600">
+                    已有账号？<a href="#" onclick="showLogin()" class="text-blue-500 hover:underline">立即登录</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用页面 -->
+    <div id="mainApp" class="hidden">
+        <!-- 顶部导航栏 -->
+        <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 hidden sm:block">AI智能学习系统</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
+                        <i class="fas fa-fire text-orange-500"></i>
+                        <span class="text-sm font-medium" id="streakDays">连续学习: 0天</span>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
+                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm font-medium" id="userAvatar">U</span>
+                            </div>
+                            <span class="hidden sm:block text-sm font-medium" id="navUsername">用户</span>
+                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                            <a href="#" onclick="showPage('profile')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>个人中心
+                            </a>
+                            <a href="#" onclick="handleLogout()" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 侧边栏遮罩 -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- 侧边栏 -->
+        <aside id="sidebar" class="fixed left-0 top-14 bottom-0 w-64 bg-white shadow-lg z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
+            <div class="p-4">
+                <nav class="space-y-1">
+                    <a href="#" onclick="showPage('dashboard')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="dashboard">
+                        <i class="fas fa-chart-line w-5"></i>
+                        <span>数据面板</span>
+                    </a>
+                    <a href="#" onclick="showPage('practice')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="practice">
+                        <i class="fas fa-pen-fancy w-5"></i>
+                        <span>开始刷题</span>
+                    </a>
+                    <a href="#" onclick="showPage('errorBook')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="errorBook">
+                        <i class="fas fa-book w-5"></i>
+                        <span>错题本</span>
+                        <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full" id="errorCount">0</span>
+                    </a>
+                    <a href="#" onclick="showPage('aiAssistant')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="aiAssistant">
+                        <i class="fas fa-robot w-5"></i>
+                        <span>AI智能助手</span>
+                    </a>
+                    <a href="#" onclick="showPage('agents')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="agents">
+                        <i class="fas fa-network-wired w-5"></i>
+                        <span>多Agent协作</span>
+                    </a>
+                    <a href="#" onclick="showPage('questionBank')" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" data-page="questionBank">
+                        <i class="fas fa-database w-5"></i>
+                        <span>题库管理</span>
+                    </a>
+                </nav>
+                
+                <div class="mt-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl text-white">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-lightbulb"></i>
+                        <span class="font-medium">AI学习建议</span>
+                    </div>
+                    <p class="text-sm text-blue-100" id="aiQuickTip">点击AI助手获取个性化学习建议</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="lg:ml-64 pt-14 min-h-screen">
+            <div class="p-4 md:p-6">
+                
+                <!-- 数据面板页面 -->
+                <div id="page-dashboard" class="page-content animate-fade-in">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">学习数据面板</h1>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-xl p-5 card-shadow card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">总刷题数</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalQuestions">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-clipboard-list text-blue-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-green-500 mt-2"><i class="fas fa-arrow-up"></i> 今日 +<span id="todayQuestions">0</span></p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-5 card-shadow card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">正确率</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="accuracyRate">0%</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">持续提升中</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-5 card-shadow card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">学习时长</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="studyTime">0h</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-clock text-purple-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">累计学习</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-5 card-shadow card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">待复习错题</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="pendingErrors">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-orange-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-orange-500 mt-2">需要及时复习</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 图表区域 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-xl p-5 card-shadow">
+                            <h3 class="font-semibold text-gray-800 mb-4">各学科正确率对比</h3>
+                            <canvas id="subjectChart" height="250"></canvas>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 card-shadow">
+                            <h3 class="font-semibold text-gray-800 mb-4">刷题进度趋势</h3>
+                            <canvas id="trendChart" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 薄弱知识点分析 -->
+                    <div class="bg-white rounded-xl p-5 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-bullseye text-red-500 mr-2"></i>薄弱知识点分析
+                        </h3>
+                        <div id="weakPointsList" class="space-y-3">
+                            <p class="text-gray-500 text-center py-8">暂无数据，开始刷题后自动分析</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 开始刷题页面 -->
+                <div id="page-practice" class="page-content hidden animate-fade-in">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">开始刷题</h1>
+                    
+                    <!-- 模式选择 -->
+                    <div id="practiceModeSelect">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div onclick="startRandomPractice()" class="bg-white rounded-xl p-6 card-shadow card-hover cursor-pointer border-2 border-transparent hover:border-blue-500">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-random text-white text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-lg">随机刷题</h3>
+                                        <p class="text-gray-500">从所有题目中随机抽取</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div onclick="showSpecialPractice()" class="bg-white rounded-xl p-6 card-shadow card-hover cursor-pointer border-2 border-transparent hover:border-purple-500">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-filter text-white text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-lg">专项刷题</h3>
+                                        <p class="text-gray-500">按学科/知识点筛选</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 专项刷题选项 -->
+                        <div id="specialPracticeOptions" class="hidden bg-white rounded-xl p-6 card-shadow mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-4">选择刷题范围</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">学科</label>
+                                    <select id="filterSubject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="">全部学科</option>
+                                        <option value="机器学习">机器学习</option>
+                                        <option value="Python编程">Python编程</option>
+                                        <option value="数据结构">数据结构</option>
+                                        <option value="计算机基础">计算机基础</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">题型</label>
+                                    <select id="filterType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="">全部题型</option>
+                                        <option value="single">单选题</option>
+                                        <option value="multiple">多选题</option>
+                                        <option value="judge">判断题</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button onclick="startSpecialPractice()" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:opacity-90 transition">
+                                开始专项刷题
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 答题区域 -->
+                    <div id="practiceArea" class="hidden">
+                        <div class="bg-white rounded-xl p-6 card-shadow mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm" id="currentSubject">学科</span>
+                                <span class="text-gray-500">题目 <span id="currentNum">1</span>/<span id="totalNum">10</span></span>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <div class="flex items-start space-x-2 mb-4">
+                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs" id="questionType">单选题</span>
+                                    <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-xs" id="questionTag">知识点</span>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-800" id="questionText">题目内容</h3>
+                            </div>
+                            
+                            <div id="optionsArea" class="space-y-3 mb-6">
+                                <!-- 选项动态生成 -->
+                            </div>
+                            
+                            <div id="answerResult" class="hidden mb-6">
+                                <div id="resultCorrect" class="hidden p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="flex items-center space-x-2 text-green-600 font-medium mb-2">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>回答正确！</span>
+                                    </div>
+                                </div>
+                                <div id="resultWrong" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <div class="flex items-center space-x-2 text-red-600 font-medium mb-2">
+                                        <i class="fas fa-times-circle"></i>
+                                        <span>回答错误</span>
+                                    </div>
+                                    <p class="text-gray-700"><strong>正确答案：</strong><span id="correctAnswer"></span></p>
+                                </div>
+                                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p class="text-blue-600 font-medium mb-2"><i class="fas fa-lightbulb mr-2"></i>解析</p>
+                                    <p class="text-gray-700" id="questionExplanation"></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <button onclick="exitPractice()" class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">
+                                    退出刷题
+                                </button>
+                                <div id="actionButtons">
+                                    <button onclick="submitAnswer()" id="submitBtn" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition">
+                                        提交答案
+                                    </button>
+                                    <button onclick="nextQuestion()" id="nextBtn" class="hidden px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition">
+                                        下一题
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 错题本页面 -->
+                <div id="page-errorBook" class="page-content hidden animate-fade-in">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">错题本</h1>
+                        <button onclick="reviewAllErrors()" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:opacity-90 transition">
+                            <i class="fas fa-redo mr-2"></i>重做所有错题
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 card-shadow mb-4">
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="filterErrors('all')" class="error-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white transition" data-filter="all">
+                                全部 (<span id="filterAllCount">0</span>)
+                            </button>
+                            <button onclick="filterErrors('pending')" class="error-filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition" data-filter="pending">
+                                待复习 (<span id="filterPendingCount">0</span>)
+                            </button>
+                            <button onclick="filterErrors('mastered')" class="error-filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition" data-filter="mastered">
+                                已掌握 (<span id="filterMasteredCount">0</span>)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="errorList" class="space-y-4">
+                        <div class="bg-white rounded-xl p-8 card-shadow text-center">
+                            <i class="fas fa-book-open text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500">暂无错题，继续保持！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI智能助手页面 -->
+                <div id="page-aiAssistant" class="page-content hidden animate-fade-in">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">AI智能助手</h1>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- AI对话区域 -->
+                        <div class="lg:col-span-2 bg-white rounded-xl card-shadow flex flex-col h-[600px]">
+                            <div class="p-4 border-b border-gray-100">
+                                <h3 class="font-semibold text-gray-800">
+                                    <i class="fas fa-comments text-blue-500 mr-2"></i>AI对话助手
+                                </h3>
+                            </div>
+                            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-robot text-white text-xs"></i>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80%]">
+                                        <p class="text-gray-700">你好！我是你的AI学习助手。我可以帮你：</p>
+                                        <ul class="text-gray-600 text-sm mt-2 space-y-1">
+                                            <li>• 分析你的错题，定位薄弱知识点</li>
+                                            <li>• 解答题目相关的知识点疑问</li>
+                                            <li>• 生成个性化学习建议</li>
+                                            <li>• 推送专项练习题</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 border-t border-gray-100">
+                                <div class="flex space-x-2">
+                                    <input type="text" id="chatInput" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="输入你的问题..." onkeypress="if(event.key==='Enter')sendMessage()">
+                                    <button onclick="sendMessage()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI功能区 -->
+                        <div class="space-y-4">
+                            <div onclick="aiAnalyzeErrors()" class="bg-white rounded-xl p-5 card-shadow card-hover cursor-pointer">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-chart-bar text-red-500"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">错题分析</h3>
+                                </div>
+                                <p class="text-gray-500 text-sm">自动分析所有错题，定位薄弱知识点</p>
+                            </div>
+                            
+                            <div onclick="aiGetLearningAdvice()" class="bg-white rounded-xl p-5 card-shadow card-hover cursor-pointer">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-lightbulb text-green-500"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">学习建议</h3>
+                                </div>
+                                <p class="text-gray-500 text-sm">基于学习数据生成个性化学习建议</p>
+                            </div>
+                            
+                            <div onclick="aiPushExercises()" class="bg-white rounded-xl p-5 card-shadow card-hover cursor-pointer">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-list text-blue-500"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">推送练习</h3>
+                                </div>
+                                <p class="text-gray-500 text-sm">针对薄弱点推送专项练习题</p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-5 text-white">
+                                <h3 class="font-semibold mb-2">AI学习报告</h3>
+                                <p class="text-blue-100 text-sm mb-4" id="aiReportSummary">点击上方功能获取详细分析</p>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span>学习状态</span>
+                                    <span id="studyStatus" class="px-2 py-1 bg-white/20 rounded">良好</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 多Agent协作页面 -->
+                <div id="page-agents" class="page-content hidden animate-fade-in">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">多Agent协作系统</h1>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-network-wired text-blue-500 mr-2"></i>Agent协作架构
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- 刷题Agent -->
+                            <div class="border-2 border-blue-200 rounded-xl p-5 bg-blue-50">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-pen-fancy text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">刷题Agent</h4>
+                                        <span class="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Practice Agent</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">负责题目展示、答题交互、自动判分</p>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        <span id="agent1Status">运行中</span>
+                                    </div>
+                                    <p class="text-gray-500">已处理题目: <span id="agent1Processed">0</span></p>
+                                </div>
+                            </div>
+                            
+                            <!-- 错题分析Agent -->
+                            <div class="border-2 border-red-200 rounded-xl p-5 bg-red-50">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-bug text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">错题分析Agent</h4>
+                                        <span class="text-xs text-red-600 bg-red-100 px-2 py-0.5 rounded">Analysis Agent</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">负责错题收集、薄弱点定位、原因分析</p>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        <span id="agent2Status">运行中</span>
+                                    </div>
+                                    <p class="text-gray-500">已分析错题: <span id="agent2Processed">0</span></p>
+                                </div>
+                            </div>
+                            
+                            <!-- 学习规划Agent -->
+                            <div class="border-2 border-green-200 rounded-xl p-5 bg-green-50">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-route text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">学习规划Agent</h4>
+                                        <span class="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">Planning Agent</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">负责学习建议、练习推送、进度规划</p>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        <span id="agent3Status">运行中</span>
+                                    </div>
+                                    <p class="text-gray-500">已生成建议: <span id="agent3Processed">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Agent协作日志 -->
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-history text-purple-500 mr-2"></i>Agent协作日志
+                        </h3>
+                        <div id="agentLogs" class="space-y-3 max-h-80 overflow-y-auto">
+                            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-400 text-xs whitespace-nowrap" id="logTime1">--:--</span>
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded">系统</span>
+                                <span class="text-gray-600 text-sm">多Agent协作系统已启动</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 题库管理页面 -->
+                <div id="page-questionBank" class="page-content hidden animate-fade-in">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">题库管理</h1>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="text-2xl font-bold text-blue-600" id="bankTotal">0</div>
+                            <p class="text-gray-500 text-sm">题目总数</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="text-2xl font-bold text-green-600" id="bankSingle">0</div>
+                            <p class="text-gray-500 text-sm">单选题</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="text-2xl font-bold text-purple-600" id="bankMultiple">0</div>
+                            <p class="text-gray-500 text-sm">多选题</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="text-2xl font-bold text-orange-600" id="bankJudge">0</div>
+                            <p class="text-gray-500 text-sm">判断题</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 card-shadow mb-4">
+                        <div class="flex flex-wrap gap-4">
+                            <select id="bankFilterSubject" onchange="filterQuestionBank()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">全部学科</option>
+                                <option value="机器学习">机器学习</option>
+                                <option value="Python编程">Python编程</option>
+                                <option value="数据结构">数据结构</option>
+                                <option value="计算机基础">计算机基础</option>
+                            </select>
+                            <select id="bankFilterType" onchange="filterQuestionBank()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">全部题型</option>
+                                <option value="single">单选题</option>
+                                <option value="multiple">多选题</option>
+                                <option value="judge">判断题</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="questionBankList" class="space-y-4">
+                        <!-- 题目列表动态生成 -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+    // ==================== 题库数据模块 ====================
+    const questionBank = [
+        // 机器学习 - 单选题
+        {
+            id: 1,
+            subject: "机器学习",
+            type: "single",
+            tag: "监督学习",
+            question: "以下哪个算法属于监督学习算法？",
+            options: ["K-Means聚类", "决策树", "PCA降维", "关联规则挖掘"],
+            answer: "B",
+            explanation: "决策树是典型的监督学习算法，需要标注数据进行训练。K-Means、PCA、关联规则挖掘都属于无监督学习。"
+        },
+        {
+            id: 2,
+            subject: "机器学习",
+            type: "single",
+            tag: "模型评估",
+            question: "在二分类问题中，哪个指标同时考虑了精确率和召回率？",
+            options: ["准确率", "F1分数", "AUC", "混淆矩阵"],
+            answer: "B",
+            explanation: "F1分数是精确率和召回率的调和平均数，能够综合评价模型性能。公式：F1 = 2 * (P * R) / (P + R)"
+        },
+        {
+            id: 3,
+            subject: "机器学习",
+            type: "single",
+            tag: "神经网络",
+            question: "在神经网络中，ReLU激活函数的主要作用是什么？",
+            options: ["防止过拟合", "引入非线性", "加速收敛", "归一化输出"],
+            answer: "B",
+            explanation: "ReLU（Rectified Linear Unit）主要作用是引入非线性变换，使神经网络能够学习复杂的非线性模式。"
+        },
+        {
+            id: 4,
+            subject: "机器学习",
+            type: "multiple",
+            tag: "过拟合",
+            question: "以下哪些方法可以有效防止过拟合？（多选）",
+            options: ["增加训练数据", "正则化", "减少模型复杂度", "交叉验证"],
+            answer: "ABCD",
+            explanation: "防止过拟合的常用方法包括：增加训练数据、L1/L2正则化、减少模型复杂度、交叉验证、早停、Dropout等。"
+        },
+        {
+            id: 5,
+            subject: "机器学习",
+            type: "judge",
+            tag: "特征工程",
+            question: "特征标准化对决策树算法有显著影响。",
+            options: ["正确", "错误"],
+            answer: "B",
+            explanation: "决策树基于信息增益或基尼系数进行分裂，不依赖特征尺度，因此特征标准化对其影响很小。"
+        },
+        
+        // Python编程
+        {
+            id: 6,
+            subject: "Python编程",
+            type: "single",
+            tag: "基础语法",
+            question: "Python中，以下哪个关键字用于定义函数？",
+            options: ["function", "def", "func", "define"],
+            answer: "B",
+            explanation: "Python使用def关键字定义函数，格式为：def 函数名(参数):"
+        },
+        {
+            id: 7,
+            subject: "Python编程",
+            type: "single",
+            tag: "数据结构",
+            question: "Python中，列表和元组的主要区别是什么？",
+            options: ["列表有序，元组无序", "列表可变，元组不可变", "列表只能存数字", "元组更快"],
+            answer: "B",
+            explanation: "列表（list）是可变对象，可以修改元素；元组（tuple）是不可变对象，创建后不能修改。"
+        },
+        {
+            id: 8,
+            subject: "Python编程",
+            type: "single",
+            tag: "异常处理",
+            question: "Python中用于捕获异常的关键字是？",
+            options: ["catch", "try-except", "error", "throw"],
+            answer: "B",
+            explanation: "Python使用try-except结构进行异常处理，try块放可能出错的代码，except块处理异常。"
+        },
+        {
+            id: 9,
+            subject: "Python编程",
+            type: "multiple",
+            tag: "高级特性",
+            question: "以下哪些是Python的高级特性？（多选）",
+            options: ["列表推导式", "生成器", "装饰器", "lambda表达式"],
+            answer: "ABCD",
+            explanation: "列表推导式、生成器、装饰器、lambda表达式都是Python的高级特性，能够简化代码并提高效率。"
+        },
+        {
+            id: 10,
+            subject: "Python编程",
+            type: "judge",
+            tag: "内存管理",
+            question: "Python具有自动垃圾回收机制。",
+            options: ["正确", "错误"],
+            answer: "A",
+            explanation: "Python使用引用计数和分代回收的垃圾回收机制自动管理内存，无需手动释放。"
+        },
+        
+        // 数据结构
+        {
+            id: 11,
+            subject: "数据结构",
+            type: "single",
+            tag: "栈与队列",
+            question: "栈的特点是什么？",
+            options: ["先进先出", "后进先出", "随机访问", "排序存储"],
+            answer: "B",
+            explanation: "栈（Stack）是后进先出（LIFO, Last In First Out）的数据结构，只能在栈顶进行插入和删除操作。"
+        },
+        {
+            id: 12,
+            subject: "数据结构",
+            type: "single",
+            tag: "排序算法",
+            question: "以下哪种排序算法的平均时间复杂度最低？",
+            options: ["冒泡排序 O(n²)", "快速排序 O(nlogn)", "选择排序 O(n²)", "插入排序 O(n²)"],
+            answer: "B",
+            explanation: "快速排序平均时间复杂度为O(nlogn)，是基于比较的排序中效率最高的算法之一。"
+        },
+        {
+            id: 13,
+            subject: "数据结构",
+            type: "single",
+            tag: "二叉树",
+            question: "二叉搜索树的中序遍历结果是什么顺序？",
+            options: ["降序", "升序", "随机", "层序"],
+            answer: "B",
+            explanation: "二叉搜索树（BST）的中序遍历结果是升序排列的，这是其重要性质。"
+        },
+        {
+            id: 14,
+            subject: "数据结构",
+            type: "multiple",
+            tag: "图算法",
+            question: "以下哪些是图的遍历算法？（多选）",
+            options: ["深度优先搜索DFS", "广度优先搜索BFS", "Dijkstra算法", "Prim算法"],
+            answer: "AB",
+            explanation: "DFS（深度优先搜索）和BFS（广度优先搜索）是图的两种基本遍历算法。Dijkstra和Prim是最短路径和最小生成树算法。"
+        },
+        {
+            id: 15,
+            subject: "数据结构",
+            type: "judge",
+            tag: "哈希表",
+            question: "哈希表查找的平均时间复杂度是O(1)。",
+            options: ["正确", "错误"],
+            answer: "A",
+            explanation: "哈希表通过哈希函数直接定位元素，平均查找时间复杂度为O(1)，是最快的查找方式之一。"
+        },
+        
+        // 计算机基础
+        {
+            id: 16,
+            subject: "计算机基础",
+            type: "single",
+            tag: "操作系统",
+            question: "进程和线程的主要区别是什么？",
+            options: ["进程更快", "线程是资源分配单位", "进程是调度单位", "线程共享进程资源"],
+            answer: "D",
+            explanation: "进程是资源分配的基本单位，线程是CPU调度的基本单位。同一进程的多个线程共享进程的资源。"
+        },
+        {
+            id: 17,
+            subject: "计算机基础",
+            type: "single",
+            tag: "计算机网络",
+            question: "HTTP协议默认使用哪个端口？",
+            options: ["21", "22", "80", "443"],
+            answer: "C",
+            explanation: "HTTP默认端口80，HTTPS默认端口443，FTP默认端口21，SSH默认端口22。"
+        },
+        {
+            id: 18,
+            subject: "计算机基础",
+            type: "single",
+            tag: "数据库",
+            question: "SQL中，用于删除表中数据的语句是？",
+            options: ["DROP", "DELETE", "REMOVE", "TRUNCATE"],
+            answer: "B",
+            explanation: "DELETE用于删除表中数据（可带WHERE条件），DROP用于删除整个表，TRUNCATE清空表中所有数据。"
+        },
+        {
+            id: 19,
+            subject: "计算机基础",
+            type: "multiple",
+            tag: "网络协议",
+            question: "以下哪些属于TCP/IP协议栈的应用层协议？（多选）",
+            options: ["HTTP", "FTP", "TCP", "DNS"],
+            answer: "ABD",
+            explanation: "HTTP、FTP、DNS都属于应用层协议，TCP属于传输层协议。"
+        },
+        {
+            id: 20,
+            subject: "计算机基础",
+            type: "judge",
+            tag: "操作系统",
+            question: "死锁的四个必要条件只要破坏一个就能避免死锁。",
+            options: ["正确", "错误"],
+            answer: "A",
+            explanation: "死锁的四个必要条件（互斥、占有并等待、非抢占、循环等待）只要破坏其中一个，就能预防死锁。"
+        },
+        {
+            id: 21,
+            subject: "机器学习",
+            type: "single",
+            tag: "集成学习",
+            question: "随机森林属于哪种集成学习方法？",
+            options: ["Bagging", "Boosting", "Stacking", "Voting"],
+            answer: "A",
+            explanation: "随机森林是Bagging的典型代表，通过bootstrap采样和特征随机化构建多棵决策树。"
+        },
+        {
+            id: 22,
+            subject: "Python编程",
+            type: "single",
+            tag: "面向对象",
+            question: "Python中，__init__方法的作用是什么？",
+            options: ["销毁对象", "初始化对象", "继承父类", "定义静态方法"],
+            answer: "B",
+            explanation: "__init__是类的构造方法，用于创建对象时进行初始化操作。"
+        },
+        {
+            id: 23,
+            subject: "数据结构",
+            type: "single",
+            tag: "链表",
+            question: "单链表相比数组的主要优势是什么？",
+            options: ["访问更快", "插入删除更高效", "占用内存更小", "支持随机访问"],
+            answer: "B",
+            explanation: "链表在已知位置插入和删除元素的时间复杂度为O(1)，而数组需要移动元素，效率较低。"
+        },
+        {
+            id: 24,
+            subject: "计算机基础",
+            type: "single",
+            tag: "组成原理",
+            question: "CPU中用于执行算术和逻辑运算的部件是？",
+            options: ["控制器", "运算器ALU", "寄存器", "缓存"],
+            answer: "B",
+            explanation: "ALU（算术逻辑单元）负责执行所有算术运算和逻辑运算，是CPU的核心计算部件。"
+        }
+    ];
+
+    // ==================== 全局状态管理 ====================
+    let currentUser = null;
+    let currentPage = 'dashboard';
+    let practiceQuestions = [];
+    let currentQuestionIndex = 0;
+    let selectedAnswers = [];
+    let studyStartTime = Date.now();
+    let subjectChart = null;
+    let trendChart = null;
+
+    // ==================== 用户系统模块 ====================
+    function initUserSystem() {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showMainApp();
+        }
+        updateUserStats();
+    }
+
+    function showLogin() {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+    }
+
+    function showRegister() {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+    }
+
+    function handleLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!username || !password) {
+            alert('请输入用户名和密码');
+            return;
+        }
+        
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[username] && users[username].password === password) {
+            currentUser = { username, ...users[username] };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            addAgentLog('刷题Agent', `用户 ${username} 登录系统`);
+            showMainApp();
+        } else {
+            alert('用户名或密码错误');
+        }
+    }
+
+    function handleRegister() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        
+        if (!username || !email || !password) {
+            alert('请填写完整信息');
+            return;
+        }
+        
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[username]) {
+            alert('用户名已存在');
+            return;
+        }
+        
+        users[username] = {
+            email,
+            password,
+            registerTime: new Date().toISOString(),
+            practiceHistory: [],
+            errorQuestions: [],
+            stats: { totalQuestions: 0, correctQuestions: 0, studyTime: 0 }
+        };
+        
+        localStorage.setItem('users', JSON.stringify(users));
+        alert('注册成功，请登录');
+        showLogin();
+    }
+
+    function handleLogout() {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        document.getElementById('authPage').classList.remove('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+        addAgentLog('系统', '用户已退出登录');
+    }
+
+    function showMainApp() {
+        document.getElementById('authPage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('navUsername').textContent = currentUser.username;
+        document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+        updateUserStats();
+        initCharts();
+        renderQuestionBank();
+        updateErrorList();
+    }
+
+    function toggleUserMenu() {
+        document.getElementById('userMenu').classList.toggle('hidden');
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    // ==================== 页面导航模块 ====================
+    function showPage(page) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`page-${page}`).classList.remove('hidden');
+        
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.classList.remove('bg-blue-50', 'text-blue-600');
+            if (item.dataset.page === page) {
+                item.classList.add('bg-blue-50', 'text-blue-600');
+            }
+        });
+        
+        currentPage = page;
+        
+        if (page === 'dashboard') updateDashboard();
+        if (page === 'errorBook') updateErrorList();
+        if (page === 'questionBank') renderQuestionBank();
+        
+        toggleSidebar();
+    }
+
+    // ==================== 刷题系统模块 ====================
+    function startRandomPractice() {
+        practiceQuestions = [...questionBank].sort(() => Math.random() - 0.5).slice(0, 10);
+        startPractice();
+        addAgentLog('刷题Agent', '启动随机刷题模式，抽取10道题目');
+    }
+
+    function showSpecialPractice() {
+        document.getElementById('specialPracticeOptions').classList.toggle('hidden');
+    }
+
+    function startSpecialPractice() {
+        const subject = document.getElementById('filterSubject').value;
+        const type = document.getElementById('filterType').value;
+        
+        practiceQuestions = questionBank.filter(q => {
+            if (subject && q.subject !== subject) return false;
+            if (type && q.type !== type) return false;
+            return true;
+        });
+        
+        if (practiceQuestions.length === 0) {
+            alert('没有符合条件的题目');
+            return;
+        }
+        
+        practiceQuestions = practiceQuestions.sort(() => Math.random() - 0.5).slice(0, Math.min(10, practiceQuestions.length));
+        startPractice();
+        addAgentLog('刷题Agent', `启动专项刷题模式：${subject || '全部'} ${type || '全部'}`);
+    }
+
+    function startPractice() {
+        currentQuestionIndex = 0;
+        selectedAnswers = [];
+        document.getElementById('practiceModeSelect').classList.add('hidden');
+        document.getElementById('practiceArea').classList.remove('hidden');
+        document.getElementById('totalNum').textContent = practiceQuestions.length;
+        renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+        const q = practiceQuestions[currentQuestionIndex];
+        document.getElementById('currentNum').textContent = currentQuestionIndex + 1;
+        document.getElementById('currentSubject').textContent = q.subject;
+        document.getElementById('questionText').textContent = q.question;
+        document.getElementById('questionTag').textContent = q.tag;
+        
+        const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+        document.getElementById('questionType').textContent = typeMap[q.type];
+        
+        const optionsArea = document.getElementById('optionsArea');
+        optionsArea.innerHTML = q.options.map((opt, idx) => {
+            const label = String.fromCharCode(65 + idx);
+            return `
+                <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition option-item">
+                    <input type="${q.type === 'multiple' ? 'checkbox' : 'radio'}" name="answer" value="${label}" class="w-4 h-4 text-blue-600">
+                    <span class="ml-3 font-medium">${label}.</span>
+                    <span class="ml-2">${opt}</span>
+                </label>
+            `;
+        }).join('');
+        
+        document.getElementById('answerResult').classList.add('hidden');
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('nextBtn').classList.add('hidden');
+    }
+
+    function submitAnswer() {
+        const q = practiceQuestions[currentQuestionIndex];
+        const selected = [];
+        document.querySelectorAll('input[name="answer"]:checked').forEach(cb => {
+            selected.push(cb.value);
+        });
+        
+        if (selected.length === 0) {
+            alert('请选择答案');
+            return;
+        }
+        
+        const userAnswer = selected.sort().join('');
+        const isCorrect = userAnswer === q.answer;
+        
+        document.getElementById('answerResult').classList.remove('hidden');
+        
+        if (isCorrect) {
+            document.getElementById('resultCorrect').classList.remove('hidden');
+            document.getElementById('resultWrong').classList.add('hidden');
+        } else {
+            document.getElementById('resultCorrect').classList.add('hidden');
+            document.getElementById('resultWrong').classList.remove('hidden');
+            document.getElementById('correctAnswer').textContent = q.answer;
+            addToErrorBook(q, userAnswer);
+        }
+        
+        document.getElementById('questionExplanation').textContent = q.explanation;
+        document.getElementById('submitBtn').classList.add('hidden');
+        document.getElementById('nextBtn').classList.remove('hidden');
+        
+        savePracticeRecord(q, isCorrect);
+        addAgentLog('刷题Agent', `完成第${currentQuestionIndex + 1}题，${isCorrect ? '回答正确' : '回答错误'}`);
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex >= practiceQuestions.length) {
+            alert('刷题完成！');
+            exitPractice();
+            updateDashboard();
+            return;
+        }
+        renderCurrentQuestion();
+    }
+
+    function exitPractice() {
+        document.getElementById('practiceModeSelect').classList.remove('hidden');
+        document.getElementById('practiceArea').classList.add('hidden');
+        document.getElementById('specialPracticeOptions').classList.add('hidden');
+    }
+
+    // ==================== 错题本模块 ====================
+    function addToErrorBook(question, userAnswer) {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (!users[currentUser.username].errorQuestions) {
+            users[currentUser.username].errorQuestions = [];
+        }
+        
+        const existing = users[currentUser.username].errorQuestions.find(e => e.id === question.id);
+        if (!existing) {
+            users[currentUser.username].errorQuestions.push({
+                ...question,
+                userAnswer,
+                errorTime: new Date().toISOString(),
+                status: 'pending',
+                errorCount: 1
+            });
+        } else {
+            existing.errorCount++;
+            existing.status = 'pending';
+        }
+        
+        localStorage.setItem('users', JSON.stringify(users));
+        updateErrorCount();
+        addAgentLog('错题分析Agent', `收集错题：${question.subject} - ${question.tag}`);
+    }
+
+    function updateErrorList(filter = 'all') {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const errors = users[currentUser.username]?.errorQuestions || [];
+        
+        const filtered = errors.filter(e => {
+            if (filter === 'pending') return e.status === 'pending';
+            if (filter === 'mastered') return e.status === 'mastered';
+            return true;
+        });
+        
+        document.getElementById('filterAllCount').textContent = errors.length;
+        document.getElementById('filterPendingCount').textContent = errors.filter(e => e.status === 'pending').length;
+        document.getElementById('filterMasteredCount').textContent = errors.filter(e => e.status === 'mastered').length;
+        
+        const errorList = document.getElementById('errorList');
+        
+        if (filtered.length === 0) {
+            errorList.innerHTML = `
+                <div class="bg-white rounded-xl p-8 card-shadow text-center">
+                    <i class="fas fa-book-open text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">暂无错题</p>
+                </div>
+            `;
+            return;
+        }
+        
+        errorList.innerHTML = filtered.map((q, idx) => `
+            <div class="bg-white rounded-xl p-5 card-shadow">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">${q.subject}</span>
+                        <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-xs">${q.tag}</span>
+                        <span class="px-2 py-0.5 ${q.status === 'mastered' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'} rounded text-xs">
+                            ${q.status === 'mastered' ? '已掌握' : '待复习'}
+                        </span>
+                    </div>
+                    <span class="text-gray-400 text-xs">错误${q.errorCount}次</span>
+                </div>
+                <p class="font-medium text-gray-800 mb-3">${q.question}</p>
+                <div class="flex flex-wrap gap-2 text-sm mb-4">
+                    <span class="text-red-500">你的答案：${q.userAnswer}</span>
+                    <span class="text-green-500">正确答案：${q.answer}</span>
+                </div>
+                <p class="text-gray-600 text-sm bg-blue-50 p-3 rounded-lg mb-4">
+                    <strong>解析：</strong>${q.explanation}
+                </p>
+                <div class="flex space-x-2">
+                    <button onclick="markAsMastered(${q.id})" class="px-3 py-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition text-sm">
+                        <i class="fas fa-check mr-1"></i>标记已掌握
+                    </button>
+                    <button onclick="deleteError(${q.id})" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition text-sm">
+                        <i class="fas fa-trash mr-1"></i>删除
+                    </button>
+                    <button onclick="askAIAboutQuestion(${JSON.stringify(q).replace(/"/g, '&quot;')})" class="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition text-sm">
+                        <i class="fas fa-robot mr-1"></i>AI讲解
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        updateErrorCount();
+    }
+
+    function filterErrors(filter) {
+        document.querySelectorAll('.error-filter-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-600');
+            if (btn.dataset.filter === filter) {
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+                btn.classList.add('bg-blue-500', 'text-white');
+            }
+        });
+        updateErrorList(filter);
+    }
+
+    function markAsMastered(id) {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const error = users[currentUser.username].errorQuestions.find(e => e.id === id);
+        if (error) {
+            error.status = 'mastered';
+            localStorage.setItem('users', JSON.stringify(users));
+            updateErrorList();
+            addAgentLog('错题分析Agent', '错题已标记为已掌握');
+        }
+    }
+
+    function deleteError(id) {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        users[currentUser.username].errorQuestions = users[currentUser.username].errorQuestions.filter(e => e.id !== id);
+        localStorage.setItem('users', JSON.stringify(users));
+        updateErrorList();
+    }
+
+    function updateErrorCount() {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const errors = users[currentUser.username]?.errorQuestions || [];
+        const pending = errors.filter(e => e.status === 'pending').length;
+        document.getElementById('errorCount').textContent = pending;
+        document.getElementById('pendingErrors').textContent = pending;
+    }
+
+    function reviewAllErrors() {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const pendingErrors = users[currentUser.username]?.errorQuestions?.filter(e => e.status === 'pending') || [];
+        
+        if (pendingErrors.length === 0) {
+            alert('没有待复习的错题');
+            return;
+        }
+        
+        practiceQuestions = pendingErrors.map(e => ({...e}));
+        startPractice();
+        showPage('practice');
+        addAgentLog('学习规划Agent', '启动错题复习模式');
+    }
+
+    // ==================== AI系统模块 ====================
+    function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        
+        addChatMessage(message, 'user');
+        input.value = '';
+        
+        setTimeout(() => {
+            const response = generateAIResponse(message);
+            addChatMessage(response, 'ai');
+        }, 1000);
+    }
+
+    function addChatMessage(message, type) {
+        const container = document.getElementById('chatMessages');
+        const isUser = type === 'user';
+        
+        const html = `
+            <div class="flex items-start space-x-3 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}">
+                <div class="w-8 h-8 ${isUser ? 'bg-gray-300' : 'bg-gradient-to-r from-blue-500 to-purple-600'} rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'} text-white text-xs"></i>
+                </div>
+                <div class="${isUser ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'} rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'} px-4 py-3 max-w-[80%]">
+                    <p>${message}</p>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function generateAIResponse(message) {
+        const responses = [
+            "这是一个很好的问题！关于这个知识点，建议你从基础概念开始理解，然后通过做题来巩固。",
+            "根据你的学习数据分析，你在这个知识点上还需要加强练习。我推荐你多做几道相关题目。",
+            "这个知识点非常重要！它是后续学习的基础。建议你先理解原理，再看例题。",
+            "从你的错题记录来看，你对这个概念的理解还有些模糊。让我给你详细解释一下...",
+            "很好的思考！这个问题涉及到核心概念，掌握它能帮助你解决很多类似问题。"
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    function aiAnalyzeErrors() {
+        addChatMessage("请帮我分析所有错题，找出薄弱知识点", "user");
+        setTimeout(() => {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const errors = users[currentUser.username]?.errorQuestions || [];
+            
+            if (errors.length === 0) {
+                addChatMessage("太棒了！你目前还没有错题，继续保持！", "ai");
+                return;
+            }
+            
+            const subjectStats = {};
+            const tagStats = {};
+            errors.forEach(e => {
+                subjectStats[e.subject] = (subjectStats[e.subject] || 0) + 1;
+                tagStats[e.tag] = (tagStats[e.tag] || 0) + 1;
+            });
+            
+            const weakSubject = Object.entries(subjectStats).sort((a,b) => b[1]-a[1])[0];
+            const weakTag = Object.entries(tagStats).sort((a,b) => b[1]-a[1])[0];
+            
+            addChatMessage(`📊 **错题分析报告**\n\n总错题数：${errors.length}\n\n薄弱学科：**${weakSubject[0]}** (${weakSubject[1]}道错题)\n\n薄弱知识点：**${weakTag[0]}**\n\n建议：重点复习${weakTag[0]}相关内容，多做专项练习。`, "ai");
+            document.getElementById('aiReportSummary').textContent = `共分析${errors}道错题，发现${weakTag[0]}为薄弱点`;
+        }, 1500);
+        
+        addAgentLog('错题分析Agent', '执行错题分析任务');
+    }
+
+    function aiGetLearningAdvice() {
+        addChatMessage("请给我一些个性化学习建议", "user");
+        setTimeout(() => {
+            const advice = `🎯 **个性化学习建议**
+
+1. **每日坚持**：建议每天固定时间刷题，保持学习连贯性
+2. **错题复盘**：每周日集中复习本周所有错题
+3. **专项突破**：针对薄弱知识点进行专项训练
+4. **循序渐进**：先掌握基础题，再挑战难题
+5. **总结归纳**：做完题后认真看解析，总结解题方法
+
+坚持就是胜利，加油！💪`;
+            addChatMessage(advice, "ai");
+            document.getElementById('studyStatus').textContent = '优秀';
+        }, 1500);
+        
+        addAgentLog('学习规划Agent', '生成个性化学习建议');
+        document.getElementById('agent3Processed').textContent = 
+            parseInt(document.getElementById('agent3Processed').textContent) + 1;
+    }
+
+    function aiPushExercises() {
+        addChatMessage("请为我推送专项练习题", "user");
+        setTimeout(() => {
+            addChatMessage("✅ 已为你准备好专项练习题！正在跳转到刷题页面...", "ai");
+            setTimeout(() => {
+                showPage('practice');
+                startRandomPractice();
+            }, 1000);
+        }, 1000);
+        
+        addAgentLog('学习规划Agent', '推送专项练习题');
+    }
+
+    function askAIAboutQuestion(question) {
+        showPage('aiAssistant');
+        setTimeout(() => {
+            addChatMessage(`请帮我讲解这道题：\n${question.question}`, "user");
+            setTimeout(() => {
+                addChatMessage(`📝 **题目解析**\n\n这道题考察的是**${question.tag}**知识点。\n\n**正确答案：${question.answer}**\n\n**详细解析：**\n${question.explanation}\n\n如果还有不明白的地方，可以继续问我！`, "ai");
+            }, 1000);
+        }, 300);
+    }
+
+    // ==================== Agent系统模块 ====================
+    function addAgentLog(agent, message) {
+        const logsContainer = document.getElementById('agentLogs');
+        const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        
+        const colorMap = {
+            '刷题Agent': 'blue',
+            '错题分析Agent': 'red',
+            '学习规划Agent': 'green',
+            '系统': 'gray'
+        };
+        const color = colorMap[agent] || 'gray';
+        
+        const html = `
+            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg animate-slide-up">
+                <span class="text-gray-400 text-xs whitespace-nowrap">${time}</span>
+                <span class="px-2 py-0.5 bg-${color}-100 text-${color}-600 text-xs rounded">${agent}</span>
+                <span class="text-gray-600 text-sm">${message}</span>
+            </div>
+        `;
+        
+        logsContainer.insertAdjacentHTML('afterbegin', html);
+    }
+
+    // ==================== 数据统计模块 ====================
+    function savePracticeRecord(question, isCorrect) {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (!users[currentUser.username].practiceHistory) {
+            users[currentUser.username].practiceHistory = [];
+        }
+        if (!users[currentUser.username].stats) {
+            users[currentUser.username].stats = { totalQuestions: 0, correctQuestions: 0, studyTime: 0 };
+        }
+        
+        users[currentUser.username].practiceHistory.push({
+            questionId: question.id,
+            subject: question.subject,
+            tag: question.tag,
+            isCorrect,
+            time: new Date().toISOString()
+        });
+        
+        users[currentUser.username].stats.totalQuestions++;
+        if (isCorrect) {
+            users[currentUser.username].stats.correctQuestions++;
+        }
+        
+        localStorage.setItem('users', JSON.stringify(users));
+        updateUserStats();
+    }
+
+    function updateUserStats() {
+        if (!currentUser) return;
+        
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const stats = users[currentUser.username]?.stats || { totalQuestions: 0, correctQuestions: 0, studyTime: 0 };
+        
+        document.getElementById('totalQuestions').textContent = stats.totalQuestions;
+        document.getElementById('accuracyRate').textContent = stats.totalQuestions > 0 
+            ? Math.round(stats.correctQuestions / stats.totalQuestions * 100) + '%' 
+            : '0%';
+        document.getElementById('studyTime').textContent = Math.round(stats.studyTime / 60) + 'h';
+        document.getElementById('todayQuestions').textContent = getTodayQuestions();
+        
+        document.getElementById('agent1Processed').textContent = stats.totalQuestions;
+        document.getElementById('agent2Processed').textContent = users[currentUser.username]?.errorQuestions?.length || 0;
+        
+        updateErrorCount();
+    }
+
+    function getTodayQuestions() {
+        if (!currentUser) return 0;
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const history = users[currentUser.username]?.practiceHistory || [];
+        const today = new Date().toDateString();
+        return history.filter(h => new Date(h.time).toDateString() === today).length;
+    }
+
+    function updateDashboard() {
+        updateUserStats();
+        updateCharts();
+        updateWeakPoints();
+    }
+
+    function initCharts() {
+        const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        
+        subjectChart = new Chart(subjectCtx, {
+            type: 'bar',
+            data: {
+                labels: ['机器学习', 'Python编程', '数据结构', '计算机基础'],
+                datasets: [{
+                    label: '正确率',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+        
+        trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                datasets: [{
+                    label: '刷题数',
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+        
+        updateCharts();
+    }
+
+    function updateCharts() {
+        if (!currentUser || !subjectChart) return;
+        
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const history = users[currentUser.username]?.practiceHistory || [];
+        
+        const subjects = ['机器学习', 'Python编程', '数据结构', '计算机基础'];
+        const subjectAccuracy = subjects.map(subject => {
+            const subjectRecords = history.filter(h => h.subject === subject);
+            if (subjectRecords.length === 0) return 0;
+            const correct = subjectRecords.filter(h => h.isCorrect).length;
+            return Math.round(correct / subjectRecords.length * 100);
+        });
+        
+        subjectChart.data.datasets[0].data = subjectAccuracy;
+        subjectChart.update();
+        
+        const dayData = [0, 0, 0, 0, 0, 0, 0];
+        history.forEach(h => {
+            const day = new Date(h.time).getDay();
+            dayData[day === 0 ? 6 : day - 1]++;
+        });
+        trendChart.data.datasets[0].data = dayData;
+        trendChart.update();
+    }
+
+    function updateWeakPoints() {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const errors = users[currentUser.username]?.errorQuestions || [];
+        const history = users[currentUser.username]?.practiceHistory || [];
+        
+        if (errors.length === 0) {
+            document.getElementById('weakPointsList').innerHTML = `
+                <p class="text-gray-500 text-center py-8">暂无数据，开始刷题后自动分析</p>
+            `;
+            return;
+        }
+        
+        const tagStats = {};
+        errors.forEach(e => {
+            if (!tagStats[e.tag]) tagStats[e.tag] = { error: 0, total: 0 };
+            tagStats[e.tag].error++;
+        });
+        
+        history.forEach(h => {
+            if (tagStats[h.tag]) tagStats[h.tag].total++;
+        });
+        
+        const weakPoints = Object.entries(tagStats)
+            .map(([tag, data]) => ({
+                tag,
+                errorRate: data.total > 0 ? Math.round(data.error / data.total * 100) : 100
+            }))
+            .sort((a, b) => b.errorRate - a.errorRate)
+            .slice(0, 5);
+        
+        document.getElementById('weakPointsList').innerHTML = weakPoints.map(p => `
+            <div class="flex items-center space-x-4">
+                <span class="w-24 text-gray-700 font-medium">${p.tag}</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-3">
+                    <div class="bg-red-500 h-3 rounded-full" style="width: ${p.errorRate}%"></div>
+                </div>
+                <span class="w-16 text-right text-red-500 font-medium">${p.errorRate}%</span>
+            </div>
+        `).join('');
+    }
+
+    // ==================== 题库管理模块 ====================
+    function renderQuestionBank() {
+        const subject = document.getElementById('bankFilterSubject').value;
+        const type = document.getElementById('bankFilterType').value;
+        
+        const filtered = questionBank.filter(q => {
+            if (subject && q.subject !== subject) return false;
+            if (type && q.type !== type) return false;
+            return true;
+        });
+        
+        document.getElementById('bankTotal').textContent = questionBank.length;
+        document.getElementById('bankSingle').textContent = questionBank.filter(q => q.type === 'single').length;
+        document.getElementById('bankMultiple').textContent = questionBank.filter(q => q.type === 'multiple').length;
+        document.getElementById('bankJudge').textContent = questionBank.filter(q => q.type === 'judge').length;
+        
+        const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+        
+        document.getElementById('questionBankList').innerHTML = filtered.map(q => `
+            <div class="bg-white rounded-xl p-5 card-shadow">
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">${q.subject}</span>
+                    <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-xs">${q.tag}</span>
+                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">${typeMap[q.type]}</span>
+                </div>
+                <p class="font-medium text-gray-800 mb-3">${q.question}</p>
+                <div class="text-sm text-gray-500 space-y-1">
+                    ${q.options.map((opt, idx) => `<p>${String.fromCharCode(65 + idx)}. ${opt}</p>`).join('')}
+                </div>
+                <p class="mt-3 text-sm text-green-600"><strong>答案：</strong>${q.answer}</p>
+            </div>
+        `).join('');
+    }
+
+    function filterQuestionBank() {
+        renderQuestionBank();
+    }
+
+    // ==================== 初始化 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        initUserSystem();
+        
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.relative')) {
+                document.getElementById('userMenu').classList.add('hidden');
+            }
+        });
+        
+        setInterval(() => {
+            if (currentUser) {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[currentUser.username]) {
+                    if (!users[currentUser.username].stats) {
+                        users[currentUser.username].stats = { totalQuestions: 0, correctQuestions: 0, studyTime: 0 };
+                    }
+                    users[currentUser.username].stats.studyTime++;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+        }, 60000);
+    });
+    </script>
+</body>
+</html>
